@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='medimageaugment',
-    version='1.2.2',
+    version='1.2.3',
     description='A Python class for image augmentation',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    author='Your Name',
-    author_email='your.email@example.com',
+    author='Ishan Ramrakhiani',
+    author_email='ishanramrakhiani@gmail.com',
     url='https://github.com/himanalot/medimageaugment',
     packages=find_packages(),
     install_requires=[
