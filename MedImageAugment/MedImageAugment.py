@@ -8,6 +8,7 @@ from skimage.util import random_noise
 import random
 from scipy.sparse import diags
 from scipy.sparse.linalg import spsolve
+from scipy.sparse import diags
 
 class ImageAugment:
     def __init__(self, seed: Optional[int] = None, modality: str = 'general',
@@ -151,16 +152,20 @@ class ImageAugment:
     def add_random_crop(self, crop_size: Tuple[int, int]):
         if crop_size[0] <= 0 or crop_size[1] <= 0:
             raise ValueError("Invalid 'crop_size'. Both values should be greater than 0.")
+        if crop_size[0] >= self.image_shape[0] or crop_size[1] >= self.image_shape[1]:
+            raise ValueError("Invalid 'crop_size'. Both values should be smaller than the dimensions of the image.")
+
+        self.crop_size = crop_size  # Store crop_size in the object for later use in augmentations
 
         def random_crop(image: np.ndarray):
-            
-            if image.shape[0] < crop_size[0] or image.shape[1] < crop_size[1]:
-                raise ValueError("Invalid 'crop_size'. Both values should be less than the dimensions of the image.")
-            start_x = np.random.randint(0, image.shape[0] - crop_size[0])
-            start_y = np.random.randint(0, image.shape[1] - crop_size[1])
-            return image[start_x : start_x + crop_size[0], start_y : start_y + crop_size[1]]
+            start_x = np.random.randint(0, image.shape[0] - self.crop_size[0] + 1)
+            start_y = np.random.randint(0, image.shape[1] - self.crop_size[1] + 1)
+
+            cropped_image = image[start_x : start_x + self.crop_size[0], start_y : start_y + self.crop_size[1]]
+            return cropped_image
 
         self.augmentations.append(random_crop)
+
 
     def add_random_blur(self, min_sigma: float, max_sigma: float):
         if min_sigma < 0 or max_sigma < min_sigma:
@@ -343,14 +348,18 @@ class ImageAugment:
 
                 # Compute the Laplacian using a sparse matrix solver (Chambolle's method)
                 laplacian = cv2.Laplacian(image, cv2.CV_64F)
-                laplacian = laplacian.reshape(-1)
-
-                # Compute the update term using the diffusion equation
-                update_term = dt * diffusivity * laplacian
 
                 # Perform the update using the solver
-                image = spsolve(diags([1 + 4 * dt * diffusivity], [0]) - dt * diffusivity * diags([1], [-1, 1], shape=(image.size, image.size)), image.reshape(-1) + update_term)
-                image = np.clip(image, 0, 255).reshape(image.shape).astype(np.uint8)
+                image_flat = image.reshape(-1)
+                update_term_flat = dt * diffusivity * laplacian.reshape(-1)
+
+                diag_main = diags([1 + 4 * dt * diffusivity], [0], shape=(image_flat.size, image_flat.size))
+                diag_off = diags([dt * diffusivity], [-1, 1], shape=(image_flat.size, image_flat.size))
+
+                updated_image_flat = spsolve(diag_main - diag_off, image_flat + update_term_flat)
+                updated_image = np.clip(updated_image_flat, 0, 255).reshape(image.shape).astype(np.uint8)
+
+                image = updated_image
 
             return image
 

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='medimageaugment',
-    version='1.2.3',
+    version='1.3.2',
     description='A Python class for image augmentation',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
