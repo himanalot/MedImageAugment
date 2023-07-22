@@ -31,7 +31,8 @@ from sklearn.model_selection import ParameterGrid
 from skimage.transform import AffineTransform, warp
 from skimage.util import random_noise
 import random
-from skimage.filters.rank import anisotropic_diffusion
+from scipy.sparse import diags
+from scipy.sparse.linalg import spsolve
 
 class MedImageAugment:
     # Class implementation...
@@ -341,11 +342,12 @@ for params in param_grid:
     - Inputs:
       - `lam` (float): Poisson parameter (mean) for the noise. Defaults to 1.
 
-29. `add_anisotropic_diffusion(self, max_iter=10, sigma=1.0)`:
+29. `add_anisotropic_diffusion(self, max_iter=10, dt=0.1, kappa=50)`:
     - Adds anisotropic diffusion augmentation to the list of augmentations.
     - Inputs:
       - `max_iter` (int): Maximum number of iterations for anisotropic diffusion. Defaults to 10.
-      - `sigma` (float): Conductance parameter for anisotropic diffusion. Defaults to 1.0.
+      - `dt` (float): Time step parameter for anisotropic diffusion. Defaults to 0.1.
+      - `kappa` (float): Conductance parameter for anisotropic diffusion. Larger values reduce diffusion across edges. Defaults to 50.
 
 ## Conclusion
 
